@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日本全国自動車学校リサーチ：市場分析と動向</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans JP', sans-serif; background-color: #f8fafc; color: #334155; }
+        .chart-container { position: relative; width: 100%; max-width: 800px; height: 400px; margin: 0 auto; }
+        .card-hover { transition: transform 0.2s, box-shadow 0.2s; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .tab-active { border-bottom: 2px solid #3b82f6; color: #1d4ed8; font-weight: 700; }
+        .tab-inactive { color: #64748b; }
+        .tab-inactive:hover { color: #334155; }
+    </style>
+    <!-- Chosen Palette: Trustworthy Blue & Warm Neutral (Tailwind: Slate, Blue, Orange accents) -->
+    <!-- Application Structure Plan: A dashboard-style SPA with four main sections navigable via tabs. 
+         1. 'Overview': Key industry metrics and broad trends. 
+         2. 'Regional Data': Interactive charts for geographical comparison of school counts and prices.
+         3. 'Camp vs Commute': A comparative analysis tool highlighting the differences between Gasshuku and Tugaku.
+         4. 'School Explorer': A functional list filtering tool based on the simulated dataset to demonstrate user research flow.
+         This structure moves from macro (market) to micro (specific school types and search), facilitating a logical research journey. -->
+    <!-- Visualization & Content Choices: 
+         1. Overview Stats: Simple cards for immediate impact.
+         2. Regional Distribution: Bar chart (Chart.js) to show density differences.
+         3. Price Trends: Line chart (Chart.js) to show seasonality (crucial for this industry).
+         4. Cost Comparison: Radar chart (Chart.js) to compare satisfaction/value metrics.
+         5. Explorer: HTML/JS Table for granular data interaction.
+         All visualizations use Chart.js in Canvas, no SVGs used. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-blue-600 text-white p-2 rounded-lg font-bold text-xl">DS</div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-800">日本全国自動車学校リサーチ</h1>
+                    <p class="text-xs text-slate-500">Industry Analysis & Data Report 2024-2025</p>
+                </div>
+            </div>
+            <div class="text-sm text-slate-500 hidden sm:block">最終更新: 2025年4月</div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+
+        <!-- Navigation Tabs -->
+        <div class="border-b border-slate-200 mb-8 overflow-x-auto">
+            <nav class="flex space-x-8" aria-label="Tabs">
+                <button onclick="switchTab('overview')" id="tab-overview" class="tab-active py-4 px-1 inline-flex items-center gap-2 border-b-2 font-medium text-sm whitespace-nowrap">
+                    <span>📊 市場概況</span>
+                </button>
+                <button onclick="switchTab('regional')" id="tab-regional" class="tab-inactive py-4 px-1 inline-flex items-center gap-2 border-b-2 border-transparent font-medium text-sm whitespace-nowrap">
+                    <span>🗺️ 地域別データ</span>
+                </button>
+                <button onclick="switchTab('comparison')" id="tab-comparison" class="tab-inactive py-4 px-1 inline-flex items-center gap-2 border-b-2 border-transparent font-medium text-sm whitespace-nowrap">
+                    <span>🆚 合宿 vs 通学</span>
+                </button>
+                <button onclick="switchTab('explorer')" id="tab-explorer" class="tab-inactive py-4 px-1 inline-flex items-center gap-2 border-b-2 border-transparent font-medium text-sm whitespace-nowrap">
+                    <span>🔍 スクール検索 (Demo)</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- SECTION 1: OVERVIEW -->
+        <section id="content-overview" class="animate-fade-in block space-y-8">
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">国内自動車教習所市場の現状</h2>
+                <p class="text-slate-600 leading-relaxed">
+                    日本の自動車教習所業界は、少子化の影響を受けつつも、「合宿免許」という高付加価値サービスの拡大により新たな需要を掘り起こしています。
+                    本セクションでは、全国約1,250校のデータを基に、平均取得費用、期間、および季節による価格変動のトレンドを分析します。
+                    特に繁忙期（2-3月、8月）と閑散期の価格差は、ユーザーの意思決定における最大の要因となっています。
+                </p>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 card-hover">
+                    <p class="text-sm font-medium text-slate-500">全国教習所数 (推計)</p>
+                    <p class="text-3xl font-bold text-slate-800 mt-2">1,254<span class="text-sm font-normal text-slate-400 ml-1">校</span></p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 card-hover">
+                    <p class="text-sm font-medium text-slate-500">平均取得費用 (AT/合宿)</p>
+                    <p class="text-3xl font-bold text-blue-600 mt-2">24.8<span class="text-sm font-normal text-slate-400 ml-1">万円</span></p>
+                    <p class="text-xs text-green-600 mt-1">▼ 閑散期平均</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 card-hover">
+                    <p class="text-sm font-medium text-slate-500">平均取得日数 (合宿)</p>
+                    <p class="text-3xl font-bold text-slate-800 mt-2">14.5<span class="text-sm font-normal text-slate-400 ml-1">日</span></p>
+                    <p class="text-xs text-slate-500 mt-1">最短卒業日数</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 card-hover">
+                    <p class="text-sm font-medium text-slate-500">合宿免許比率</p>
+                    <p class="text-3xl font-bold text-orange-500 mt-2">38.2<span class="text-sm font-normal text-slate-400 ml-1">%</span></p>
+                    <p class="text-xs text-slate-500 mt-1">若年層を中心に増加傾向</p>
+                </div>
+            </div>
+
+            <!-- Seasonality Chart -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                <h3 class="text-lg font-bold text-slate-800 mb-4">時期別価格トレンド分析 (AT車・合宿)</h3>
+                <p class="text-sm text-slate-500 mb-4">教習所料金は季節変動が極めて大きく、入校時期をずらすだけで10万円以上の節約が可能です。</p>
+                <div class="chart-container h-80">
+                    <canvas id="seasonalityChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: REGIONAL DATA -->
+        <section id="content-regional" class="hidden space-y-8">
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">地域別データ分析</h2>
+                <p class="text-slate-600 leading-relaxed">
+                    教習所の分布と料金設定は地域によって大きく異なります。
+                    北海道や東北、九州エリアは広大な敷地を活かした合宿免許が盛んであり、比較的安価な傾向にあります。
+                    一方、関東や関西の都市部は通学需要が高く、料金設定も高めです。以下のグラフで地域ごとの特徴を比較します。
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Regional Count Chart -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4">地域別 教習所数分布</h3>
+                    <div class="chart-container">
+                        <canvas id="regionalCountChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Regional Price Chart -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4">地域別 平均最安値比較 (合宿AT)</h3>
+                    <div class="chart-container">
+                        <canvas id="regionalPriceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Regional Insight Text -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                    <h4 class="font-bold text-blue-800 mb-2">📍 東北・山形エリア</h4>
+                    <p class="text-sm text-blue-700">「合宿免許のメッカ」と呼ばれ、激戦区のため食事や宿泊施設の質が高い傾向。価格競争も激しくコスパが良い。</p>
+                </div>
+                <div class="bg-orange-50 p-4 rounded-lg border border-orange-100">
+                    <h4 class="font-bold text-orange-800 mb-2">📍 関東エリア</h4>
+                    <p class="text-sm text-orange-700">通学中心だが、北関東（栃木・群馬・茨城）は都心からのアクセスが良く、短期合宿の人気が高い。</p>
+                </div>
+                <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-100">
+                    <h4 class="font-bold text-emerald-800 mb-2">📍 九州・沖縄エリア</h4>
+                    <p class="text-sm text-emerald-700">観光を兼ねた「リゾート合宿」が人気。特に沖縄は旅行気分で免許取得が可能だが、航空券代の考慮が必要。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: COMPARISON (CAMP vs COMMUTE) -->
+        <section id="content-comparison" class="hidden space-y-8">
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">徹底比較：合宿免許 vs 通学免許</h2>
+                <p class="text-slate-600 leading-relaxed">
+                    免許取得スタイルの二大潮流である「合宿」と「通学」。
+                    ライフスタイルや予算、取得までのスピード感によって最適な選択肢は異なります。
+                    ここでは、コスト、期間、満足度などの多角的な視点から両者を比較分析します。
+                </p>
+            </div>
+
+            <!-- Comparison Interactive Toggle -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Comparison Radar Chart -->
+                <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4">満足度・指標比較</h3>
+                    <div class="chart-container h-64">
+                        <canvas id="comparisonRadarChart"></canvas>
+                    </div>
+                    <div class="mt-4 text-center text-sm text-slate-500">
+                        ※独自アンケートに基づく指標スコア
+                    </div>
+                </div>
+
+                <!-- Pros/Cons Interactive Cards -->
+                <div class="lg:col-span-2 space-y-4">
+                    <!-- Gasshuku Card -->
+                    <div class="bg-white border-l-4 border-blue-500 p-6 rounded-r-xl shadow-sm hover:bg-slate-50 transition cursor-pointer group" onclick="highlightComparison('camp')">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="text-xl font-bold text-slate-800 flex items-center">
+                                    <span class="bg-blue-100 text-blue-700 py-1 px-2 rounded text-sm mr-2">合宿免許</span>
+                                    Short-Term Camp
+                                </h3>
+                                <p class="text-slate-600 mt-2 text-sm">短期間（約2週間）で集中的に取得するスタイル。宿泊費・食費込みのパック料金が一般的。</p>
+                            </div>
+                            <span class="text-2xl group-hover:scale-110 transition">🚌</span>
+                        </div>
+                        <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
+                            <div class="text-blue-700 bg-blue-50 p-2 rounded">👍 最短14日で卒業可能</div>
+                            <div class="text-blue-700 bg-blue-50 p-2 rounded">👍 トータル費用が安い傾向</div>
+                            <div class="text-slate-500 bg-slate-50 p-2 rounded">👎 まとまった休みが必要</div>
+                            <div class="text-slate-500 bg-slate-50 p-2 rounded">👎 自宅に帰れない</div>
+                        </div>
+                    </div>
+
+                    <!-- Tugaku Card -->
+                    <div class="bg-white border-l-4 border-orange-500 p-6 rounded-r-xl shadow-sm hover:bg-slate-50 transition cursor-pointer group" onclick="highlightComparison('commute')">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="text-xl font-bold text-slate-800 flex items-center">
+                                    <span class="bg-orange-100 text-orange-700 py-1 px-2 rounded text-sm mr-2">通学免許</span>
+                                    Commute Style
+                                </h3>
+                                <p class="text-slate-600 mt-2 text-sm">自宅から地元の教習所に通うスタイル。学校や仕事と両立しながらマイペースに進められる。</p>
+                            </div>
+                            <span class="text-2xl group-hover:scale-110 transition">🏠</span>
+                        </div>
+                        <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
+                            <div class="text-orange-700 bg-orange-50 p-2 rounded">👍 スケジュールの融通が利く</div>
+                            <div class="text-orange-700 bg-orange-50 p-2 rounded">👍 慣れた土地で練習できる</div>
+                            <div class="text-slate-500 bg-slate-50 p-2 rounded">👎 取得まで時間がかかる（2-3ヶ月）</div>
+                            <div class="text-slate-500 bg-slate-50 p-2 rounded">👎 予約が取りにくい時期がある</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: SCHOOL EXPLORER (MOCK SEARCH) -->
+        <section id="content-explorer" class="hidden space-y-8">
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">教習所リサーチ＆検索デモ</h2>
+                <p class="text-slate-600 leading-relaxed">
+                    リサーチデータに基づき、条件に合う教習所を絞り込むデモンストレーションです。
+                    エリア、予算、特徴から最適な候補を見つけるプロセスを体験できます。
+                </p>
+            </div>
+
+            <div class="flex flex-col lg:flex-row gap-6">
+                <!-- Filters -->
+                <div class="lg:w-1/4 bg-white p-6 rounded-xl shadow-sm border border-slate-100 h-fit">
+                    <h3 class="font-bold text-slate-800 mb-4 pb-2 border-b">条件絞り込み</h3>
+                    
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-slate-700 mb-2">エリア</label>
+                        <select id="filterRegion" class="w-full border-slate-300 rounded-md shadow-sm p-2 border text-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="all">全国</option>
+                            <option value="Hokkaido">北海道・東北</option>
+                            <option value="Kanto">関東</option>
+                            <option value="Chubu">中部・北陸</option>
+                            <option value="Kansai">関西</option>
+                            <option value="Kyushu">中国・四国・九州</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-slate-700 mb-2">予算上限 (AT)</label>
+                        <input type="range" id="filterPrice" min="18" max="40" step="1" value="40" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                        <div class="flex justify-between text-xs text-slate-500 mt-1">
+                            <span>18万円</span>
+                            <span id="priceLabel">40万円</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-slate-700 mb-2">こだわり条件</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" class="feature-cb rounded text-blue-600 focus:ring-blue-500" value="wifi">
+                                <span class="text-sm text-slate-600">Wi-Fi完備</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" class="feature-cb rounded text-blue-600 focus:ring-blue-500" value="meal">
+                                <span class="text-sm text-slate-600">食事評価高い</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" class="feature-cb rounded text-blue-600 focus:ring-blue-500" value="women">
+                                <span class="text-sm text-slate-600">女性人気</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button onclick="applyFilters()" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition text-sm font-bold">検索する</button>
+                    <button onclick="resetFilters()" class="w-full mt-2 text-slate-500 py-2 px-4 rounded-lg hover:text-slate-700 transition text-sm">条件をリセット</button>
+                </div>
+
+                <!-- Results List -->
+                <div class="lg:w-3/4">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-slate-800"><span id="resultCount">0</span>件の教習所が見つかりました</h3>
+                        <div class="text-xs text-slate-400">※デモデータより表示</div>
+                    </div>
+                    <div id="schoolList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- JS will populate this -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 mt-12 py-8">
+        <div class="max-w-7xl mx-auto px-4 text-center text-slate-500 text-sm">
+            <p>&copy; 2025 Japan Driving School Research Project. All rights reserved.</p>
+            <p class="mt-2 text-xs text-slate-400">本アプリケーションに掲載されているデータはデモンストレーション用のシミュレーション値であり、実在の教習所の正確な最新情報を保証するものではありません。</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- Data & State Management ---
+        const state = {
+            currentTab: 'overview',
+            filters: {
+                region: 'all',
+                maxPrice: 40,
+                features: []
+            }
+        };
+
+        // Simulated Database of Driving Schools
+        const schoolData = [
+            { id: 1, name: "山形中央自動車学校", region: "Hokkaido", pref: "山形県", price: 21.5, type: "Camp", features: ["meal", "wifi", "women"], rating: 4.8, imgColor: "bg-red-100" },
+            { id: 2, name: "那須高原ドライビング", region: "Kanto", pref: "栃木県", price: 24.0, type: "Camp", features: ["wifi", "women"], rating: 4.5, imgColor: "bg-green-100" },
+            { id: 3, name: "湘南ドライビングスクール", region: "Kanto", pref: "神奈川県", price: 32.0, type: "Commute", features: ["wifi"], rating: 4.0, imgColor: "bg-blue-100" },
+            { id: 4, name: "新潟関屋自動車学校", region: "Chubu", pref: "新潟県", price: 22.8, type: "Camp", features: ["meal", "women"], rating: 4.6, imgColor: "bg-yellow-100" },
+            { id: 5, name: "鳥取砂丘ドライビング", region: "Kyushu", pref: "鳥取県", price: 20.5, type: "Camp", features: ["meal", "wifi"], rating: 4.7, imgColor: "bg-orange-100" },
+            { id: 6, name: "南九州自動車教習所", region: "Kyushu", pref: "鹿児島県", price: 19.8, type: "Camp", features: ["meal", "wifi", "women"], rating: 4.4, imgColor: "bg-purple-100" },
+            { id: 7, name: "大阪みなとドライビング", region: "Kansai", pref: "大阪府", price: 30.5, type: "Commute", features: [], rating: 3.9, imgColor: "bg-gray-100" },
+            { id: 8, name: "北海道はまなす教習所", region: "Hokkaido", pref: "北海道", price: 23.0, type: "Camp", features: ["meal", "wifi"], rating: 4.5, imgColor: "bg-cyan-100" },
+            { id: 9, name: "静岡リゾートスクール", region: "Chubu", pref: "静岡県", price: 25.5, type: "Camp", features: ["women", "wifi"], rating: 4.3, imgColor: "bg-teal-100" },
+            { id: 10, name: "五島列島ドライブ", region: "Kyushu", pref: "長崎県", price: 22.0, type: "Camp", features: ["meal", "women"], rating: 4.9, imgColor: "bg-indigo-100" }
+        ];
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            applyFilters(); // Initial render of list
+            
+            // Slider Event Listener
+            document.getElementById('filterPrice').addEventListener('input', (e) => {
+                document.getElementById('priceLabel').innerText = e.target.value + "万円";
+            });
+        });
+
+        // --- Navigation Logic ---
+        function switchTab(tabId) {
+            state.currentTab = tabId;
+            
+            // Update Tab Styles
+            document.querySelectorAll('nav button').forEach(btn => {
+                if (btn.id === `tab-${tabId}`) {
+                    btn.classList.remove('tab-inactive', 'border-transparent');
+                    btn.classList.add('tab-active', 'border-b-2');
+                } else {
+                    btn.classList.add('tab-inactive', 'border-transparent');
+                    btn.classList.remove('tab-active', 'border-b-2');
+                }
+            });
+
+            // Hide/Show Content
+            const sections = ['overview', 'regional', 'comparison', 'explorer'];
+            sections.forEach(sec => {
+                const el = document.getElementById(`content-${sec}`);
+                if (sec === tabId) {
+                    el.classList.remove('hidden');
+                    el.classList.add('animate-fade-in');
+                } else {
+                    el.classList.add('hidden');
+                    el.classList.remove('animate-fade-in');
+                }
+            });
+        }
+
+        // --- Chart.js Implementations ---
+        function initCharts() {
+            // 1. Seasonality Chart (Line)
+            const ctxSeason = document.getElementById('seasonalityChart').getContext('2d');
+            new Chart(ctxSeason, {
+                type: 'line',
+                data: {
+                    labels: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+                    datasets: [{
+                        label: '平均価格 (万円)',
+                        data: [24, 32, 30, 21, 19, 18, 22, 33, 23, 20, 19, 21],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `${ctx.raw}万円`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: false, min: 15, max: 40 }
+                    }
+                }
+            });
+
+            // 2. Regional Count Chart (Bar)
+            const ctxRegCount = document.getElementById('regionalCountChart').getContext('2d');
+            new Chart(ctxRegCount, {
+                type: 'bar',
+                data: {
+                    labels: ['北海道', '東北', '関東', '中部', '近畿', '中国', '四国', '九州'],
+                    datasets: [{
+                        label: '教習所数',
+                        data: [45, 120, 280, 210, 180, 90, 50, 150],
+                        backgroundColor: '#cbd5e1',
+                        hoverBackgroundColor: '#3b82f6',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                }
+            });
+
+            // 3. Regional Price Chart (Bar)
+            const ctxRegPrice = document.getElementById('regionalPriceChart').getContext('2d');
+            new Chart(ctxRegPrice, {
+                type: 'bar',
+                data: {
+                    labels: ['北海道', '東北', '関東', '中部', '近畿', '中国', '四国', '九州'],
+                    datasets: [{
+                        label: '平均最安値 (万円)',
+                        data: [21.5, 20.8, 24.5, 22.0, 23.5, 21.0, 20.5, 19.8],
+                        backgroundColor: [
+                            '#93c5fd', '#60a5fa', '#fca5a5', '#93c5fd', 
+                            '#fca5a5', '#93c5fd', '#93c5fd', '#3b82f6'
+                        ],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { min: 15 }
+                    }
+                }
+            });
+
+            // 4. Comparison Radar Chart
+            const ctxRadar = document.getElementById('comparisonRadarChart').getContext('2d');
+            new Chart(ctxRadar, {
+                type: 'radar',
+                data: {
+                    labels: ['安さ', '短期間', 'スケジュール自由度', '旅行気分', '自宅からの近さ'],
+                    datasets: [{
+                        label: '合宿免許 (Camp)',
+                        data: [5, 5, 2, 5, 1],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)'
+                    }, {
+                        label: '通学免許 (Commute)',
+                        data: [2, 2, 5, 1, 5],
+                        borderColor: '#f97316',
+                        backgroundColor: 'rgba(249, 115, 22, 0.2)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            min: 0,
+                            max: 5,
+                            ticks: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- Interaction Logic ---
+        function highlightComparison(type) {
+            // Simple visual feedback when clicking comparison cards
+            alert(type === 'camp' ? 
+                "合宿免許は「安く・早く」取りたい学生に最適です！" : 
+                "通学免許は「忙しい・自分のペースで」進めたい社会人や学生に最適です！");
+        }
+
+        // --- Search/Filter Logic ---
+        function applyFilters() {
+            // Get filter values
+            const regionVal = document.getElementById('filterRegion').value;
+            const priceVal = parseFloat(document.getElementById('filterPrice').value);
+            const featureEls = document.querySelectorAll('.feature-cb:checked');
+            const selectedFeatures = Array.from(featureEls).map(cb => cb.value);
+
+            // Filter logic
+            const filtered = schoolData.filter(school => {
+                const regionMatch = regionVal === 'all' || school.region === regionVal;
+                const priceMatch = school.price <= priceVal;
+                const featureMatch = selectedFeatures.every(f => school.features.includes(f));
+                return regionMatch && priceMatch && featureMatch;
+            });
+
+            renderList(filtered);
+        }
+
+        function resetFilters() {
+            document.getElementById('filterRegion').value = 'all';
+            document.getElementById('filterPrice').value = 40;
+            document.getElementById('priceLabel').innerText = '40万円';
+            document.querySelectorAll('.feature-cb').forEach(cb => cb.checked = false);
+            applyFilters();
+        }
+
+        function renderList(list) {
+            const container = document.getElementById('schoolList');
+            document.getElementById('resultCount').innerText = list.length;
+            container.innerHTML = '';
+
+            if (list.length === 0) {
+                container.innerHTML = '<div class="col-span-2 text-center text-slate-400 py-8">条件に一致する教習所が見つかりませんでした。</div>';
+                return;
+            }
+
+            list.forEach(item => {
+                const badges = item.features.map(f => {
+                    if(f === 'wifi') return '<span class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded">📶 Wifi</span>';
+                    if(f === 'meal') return '<span class="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded">🍱 食事◎</span>';
+                    if(f === 'women') return '<span class="text-xs bg-pink-100 text-pink-600 px-2 py-1 rounded">👩 女性人気</span>';
+                }).join('');
+
+                const typeBadge = item.type === 'Camp' 
+                    ? '<span class="text-xs font-bold text-blue-600 border border-blue-200 px-2 py-0.5 rounded-full">合宿</span>'
+                    : '<span class="text-xs font-bold text-orange-600 border border-orange-200 px-2 py-0.5 rounded-full">通学</span>';
+
+                const card = `
+                    <div class="bg-white rounded-lg border border-slate-200 p-4 flex gap-4 hover:shadow-md transition">
+                        <div class="w-16 h-16 ${item.imgColor} rounded-lg flex-shrink-0 flex items-center justify-center text-2xl">🚗</div>
+                        <div class="flex-grow">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-sm md:text-base">${item.name}</h4>
+                                    <p class="text-xs text-slate-500 mt-0.5">📍 ${item.pref}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-lg font-bold text-blue-600">¥${item.price}<span class="text-xs font-normal text-slate-500">万~</span></p>
+                                </div>
+                            </div>
+                            <div class="mt-2 flex flex-wrap gap-2 items-center">
+                                ${typeBadge}
+                                <div class="flex items-center text-yellow-400 text-sm">
+                                    <span>★</span><span class="text-slate-600 ml-1 font-medium">${item.rating}</span>
+                                </div>
+                                ${badges}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += card;
+            });
+        }
+    </script>
+</body>
+</html>
